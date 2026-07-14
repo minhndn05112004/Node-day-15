@@ -18,6 +18,15 @@ services:
       retries: 5
       start_period: 30s
 
+  app-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     restart: unless-stopped
@@ -29,8 +38,12 @@ services:
       DB_USER: appuser
       DB_PASSWORD: apppassword
       DB_NAME: appdb
+      REDIS_URL: redis://app-redis:6379
+      JWT_SECRET: supersecretjwtkey
     depends_on:
       db:
+        condition: service_healthy
+      app-redis:
         condition: service_healthy
 
   frontend:
